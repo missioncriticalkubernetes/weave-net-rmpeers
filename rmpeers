@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+set -u
+set -x
+
+while true; do
+  curl -H "Accept: application/json" http://localhost:6784/report | jq -r .IPAM.Entries[].Nickname > /tmp/nicknames
+  kubectl get node -o custom-columns=name:.metadata.name --no-headers > /tmp/node-names
+  grep -v -f /tmp/node-names /tmp/nicknames | xargs -n 1 -I '{}' curl -H "Accept: application/json" -X DELETE 'http://localhost:6784/peer/{}'
+  sleep 60
+done

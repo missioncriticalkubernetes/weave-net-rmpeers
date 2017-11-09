@@ -1,0 +1,48 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: weave-net-rmpeers
+  namespace: kube-system
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: weave-net-rmpeers
+    spec:
+      serviceAccount: weave-net
+      containers:
+      - name: rmpeers
+        image: missioncriticalkubernetes/weave-net-rmpeers:1.0.1
+        resources:
+          requests:
+            cpu: "0.01"
+            memory: "20Mi"
+          limits:
+            cpu: "0.1"
+            memory: "20Mi"
+        volumeMounts:
+        - name: fence
+          mountPath: /unused
+      hostNetwork: true
+      volumes:
+      - name: fence
+        persistentVolumeClaim:
+          claimName: weave-net-rmpeers-fence
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: weave-net-rmpeers-fence
+  namespace: kube-system
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
